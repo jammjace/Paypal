@@ -122,6 +122,27 @@ strong { font-weight: 600; }
 .merchant-3 { background: #e9effe; color: #4764b1; }
 .merchant-value { margin-left: auto; text-align: right; }
 .merchant-row .micro { font-size: 11px; margin-top: 2px; }
+.analytics-details { border-top: 1px solid var(--line); margin-top: 18px; padding-top: 14px; }
+.analytics-details > summary { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 14px; font-weight: 600; cursor: pointer; list-style: none; min-height: 30px; }
+summary::-webkit-details-marker { display: none; }
+summary:focus-visible { outline: 3px solid #4967e7; outline-offset: 4px; border-radius: 4px; }
+details[open] > summary > svg:last-child { transform: rotate(180deg); }
+.category-changes { list-style: none; margin: 12px 0; padding: 0; }
+.category-changes li { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 9px 0; font-size: 13px; }
+.category-changes li + li { border-top: 1px solid #f0f2f6; }
+.merchant-detail + .merchant-detail { border-top: 1px solid #f0f2f6; }
+.merchant-detail > summary { cursor: pointer; list-style: none; }
+.merchant-detail > summary:hover { background: #f7f9ff; }
+.disclosure-chevron { color: #64759a; flex-shrink: 0; }
+.merchant-breakdown { padding: 14px; margin: 0 0 12px; border-radius: 10px; background: #f5f7fc; }
+.merchant-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; margin: 0 0 12px; }
+.merchant-metrics dt { font-size: 12px; color: #606d82; }
+.merchant-metrics dd { margin: 3px 0 0; font-size: 15px; font-weight: 600; }
+.merchant-share { font-size: 12px; margin: 5px 0; }
+.income-metrics { margin: 12px 0; }
+.income-metrics > div { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; font-size: 13px; }
+.income-metrics dd { margin: 0; font-weight: 600; }
+.income-metrics > div:first-child, .income-metrics > div:last-child { border-bottom: 1px solid var(--line); font-weight: 600; }
 .future-card { background: #f2f2fc; border-color: #e6e6f4; padding: 23px 27px 17px; margin-bottom: 25px; }
 .future-card .title-with-icon > svg { color: #8980bd; }
 .soft-tag { font-size: 10px; color: #7e76a4; border: 1px solid #dbd8ed; border-radius: 5px; padding: 2px 6px; }

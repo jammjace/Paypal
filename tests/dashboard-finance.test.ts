@@ -4,7 +4,7 @@ import { createDemoFixture } from "@/fixtures/demo";
 
 const fixture = createDemoFixture({ userId: "u", accountId: "a", connectionId: "c" }, "2026-10-15T18:00:00.000Z");
 
-describe("milestone 1 read-only calculation slice", () => {
+describe("dashboard finance regression", () => {
   it("preserves negative Safe to Spend instead of silently clamping", () => {
     expect(balanceSummary(100, fixture.buckets).safeToSpendCents).toBe(-194300);
   });
@@ -20,8 +20,8 @@ describe("milestone 1 read-only calculation slice", () => {
   });
   it("does not count incoming reimbursements, refunds or internal transfers as spending", () => {
     const current = spendingSummary(fixture.transactions, fixture.asOf).currentCents;
-    const transfer = { ...fixture.transactions[0], id: "transfer-out", transactionType: "INTERNAL_TRANSFER" as const, amountCents: 800000 };
-    const pending = { ...fixture.transactions[0], id: "pending", status: "PENDING" as const, amountCents: 800000 };
+    const transfer = { ...fixture.transactions[0], id: "transfer-out", providerTransactionId: "transfer-out", transactionType: "INTERNAL_TRANSFER" as const, amountCents: 800000 };
+    const pending = { ...fixture.transactions[0], id: "pending", providerTransactionId: "pending", status: "PENDING" as const, amountCents: 800000 };
     expect(spendingSummary([...fixture.transactions, transfer, pending], fixture.asOf).currentCents).toBe(current);
   });
   it("rejects unsafe sums and fractional inputs", () => {
@@ -31,5 +31,9 @@ describe("milestone 1 read-only calculation slice", () => {
   });
   it("returns empty aggregates without fabricated history", () => {
     expect(spendingSummary([], fixture.asOf)).toMatchObject({ currentCents: 0, previousCents: 0, percentChangeTenths: null, merchants: [] });
+  });
+  it("excludes transactions later than the dashboard snapshot, including later today", () => {
+    const future = { ...fixture.transactions[0], id: "future", providerTransactionId: "future", amountCents: 900000, transactionDate: "2026-10-15T20:00:00.000Z" };
+    expect(spendingSummary([...fixture.transactions, future], fixture.asOf).currentCents).toBe(74200);
   });
 });

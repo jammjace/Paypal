@@ -1,10 +1,11 @@
-import { ArrowDown, ArrowUp, ArrowUpRight, CalendarDays, Check, Coffee, Gift, House, Info, Layers3, Plane, Plus, Send, Sparkles, TrendingDown, TrendingUp, Wallet } from "lucide-react";
+import { ArrowUpRight, CalendarDays, Check, Coffee, Gift, House, Info, Layers3, Plane, Plus, Send, Sparkles, Wallet } from "lucide-react";
 import type { DashboardData } from "@/services/dashboard";
 import type { Bucket } from "@/domain/models";
-import { money, periodLabel, shortDate } from "@/lib/format";
+import { money, shortDate } from "@/lib/format";
 import { percentageTenths } from "@/finance/dashboard";
 import { PalMascot } from "./PalMascot";
 import { QuickCheck } from "./QuickCheck";
+import { SpendingAnalytics } from "./SpendingAnalytics";
 
 function bucketAppearance(bucket: Bucket) {
   if (bucket.type === "BILL") return { icon: House, color: "blue" };
@@ -18,7 +19,7 @@ export function PalDashboard({ data, preview }: { data: DashboardData; preview: 
   const { balance, spending } = data;
   const down = spending.differenceCents < 0;
   const trend = spending.percentChangeTenths === null ? null : (Math.abs(spending.percentChangeTenths) / 10).toFixed(1);
-  const TrendIcon = down ? TrendingDown : TrendingUp;
+
   const milestones = data.buckets.filter(bucket => bucket.targetDate).sort((a, b) => a.targetDate!.localeCompare(b.targetDate!)).slice(0, 3);
   return <>
     <a className="skip-link" href="#main">Skip to dashboard</a>
@@ -36,7 +37,7 @@ export function PalDashboard({ data, preview }: { data: DashboardData; preview: 
         <div className="card earmarked-card"><span className="metric-label"><Layers3 size={18} /> Earmarked</span><p className="balance-number">{money(balance.earmarkedCents, data.currency)}</p><a className="text-link" href="#buckets">Across {data.buckets.length} buckets <ArrowUpRight size={15} /></a></div>
       </section>
 
-      <section className="pal-insight card" aria-labelledby="insight-title"><div className="insight-intro"><PalMascot /><div><div className="pal-caption"><Sparkles size={14} /> A LITTLE PERSPECTIVE FROM PAL</div><h2 id="insight-title">{trend === null ? "Your money picture starts here." : `You’re spending ${trend}% ${down ? "less" : "more"} than last month.`}</h2><p>Comparing the same days in each month. Your buckets keep your plans in view.</p></div></div>
+      <section className="pal-insight card" aria-labelledby="insight-title"><div className="insight-intro"><PalMascot /><div><div className="pal-caption"><Sparkles size={14} /> A LITTLE PERSPECTIVE FROM PAL</div><h2 id="insight-title">{trend === null ? "Your money picture starts here." : spending.differenceCents === 0 ? "Your spending is level with last month." : `You’re spending ${trend}% ${down ? "less" : "more"} than last month.`}</h2><p>Comparing the same days in each month. Your buckets keep your plans in view.</p></div></div>
         <div className="ask-input"><Sparkles size={20} /><label className="sr-only" htmlFor="ask-pal">Ask Pal about your money</label><input id="ask-pal" placeholder="Ask anything about your money…" disabled aria-describedby="ask-note" /><button aria-label="Send question — coming later" disabled><Send size={18} /></button></div>
         <div className="ask-bottom"><div className="prompt-chips"><button disabled>Compare this month</button><button disabled>Where did I spend most?</button><button disabled>Add to Travel</button></div><span id="ask-note" className="micro">Ask Pal is coming next</span></div>
       </section>
@@ -52,8 +53,7 @@ export function PalDashboard({ data, preview }: { data: DashboardData; preview: 
         })}</div>
       </section>
 
-      <div className="analytics-grid"><section className="card pulse-card" id="pulse" aria-labelledby="pulse-title"><div className="section-heading"><h2 id="pulse-title">Spending Pulse</h2><span className="icon-tile mini mint"><TrendIcon size={19} /></span></div><p className="muted">A fair comparison. Same days, each month.</p><div className="pulse-figures"><div><span className="micro">{periodLabel(spending.periods.current)}</span><strong>{money(spending.currentCents, data.currency)}</strong></div><span className="versus">vs.</span><div><span className="micro">{periodLabel(spending.periods.previous)}</span><strong className="muted-number">{money(spending.previousCents, data.currency)}</strong></div></div><div className="comparison-bars" aria-hidden="true"><div style={{ width: `${Math.max(1, spending.currentCents / Math.max(spending.currentCents, spending.previousCents, 1) * 100)}%` }} /><div style={{ width: `${Math.max(1, spending.previousCents / Math.max(spending.currentCents, spending.previousCents, 1) * 100)}%` }} /></div><div className={`trend-result ${down ? "positive" : ""}`}>{down ? <ArrowDown size={16} /> : <ArrowUp size={16} />}<strong>{money(Math.abs(spending.differenceCents), data.currency)} {down ? "less" : "more"}</strong><span>{trend === null ? "No previous spending baseline" : `${trend}% ${down ? "down" : "up"} from last month`}</span></div><p className="micro">Completed outgoing spending; internal transfers excluded.</p></section>
-        <section className="card merchants-card" aria-labelledby="merchants-title"><div className="section-heading"><h2 id="merchants-title">Top merchants</h2><span className="micro">This month to date</span></div><p className="muted">The places your money went.</p><div className="merchant-list">{spending.merchants.slice(0, 4).map((merchant, index) => <div className="merchant-row" key={merchant.name}><span className={`merchant-logo merchant-${index}`}>{merchant.name.slice(0, 1)}</span><div><strong>{merchant.name}</strong><span className="micro">{merchant.count} {merchant.count === 1 ? "transaction" : "transactions"} · {merchant.category}</span></div><div className="merchant-value"><strong>{money(merchant.totalCents, data.currency)}</strong><span className="micro">{(merchant.shareTenths ?? 0) / 10}% of spending</span></div></div>)}</div></section></div>
+      <SpendingAnalytics data={data} />
 
       <section className="future-card card" aria-labelledby="future-title"><div className="section-heading"><div><div className="title-with-icon"><Sparkles size={19} /><h2 id="future-title">Future You</h2><span className="soft-tag">A look ahead</span></div><p className="muted">A few dates your future self has in mind.</p></div><button className="subtle-button" disabled title="Projections will be implemented in milestone 6">View timeline</button></div><div className="timeline"><div className="timeline-stop today"><span className="timeline-dot" /><span className="micro">{shortDate(data.asOf)}</span><strong>Today</strong><span>{money(balance.safeToSpendCents, data.currency)} Safe to Spend</span></div>{milestones.map(bucket => <div className="timeline-stop" key={bucket.id}><span className="timeline-dot" /><span className="micro">{shortDate(bucket.targetDate!)}</span><strong>{bucket.name}{bucket.type === "BILL" ? " due" : " goal"}</strong><span>{money(bucket.targetAmountCents, data.currency)} target</span></div>)}</div><p className="preview-note">Scheduled bucket dates only. Balance projections and what-if scenarios are coming later.</p></section>
 

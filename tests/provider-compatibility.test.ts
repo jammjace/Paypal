@@ -47,6 +47,8 @@ describe("provider-independent finance behavior", () => {
     expect(first.spending.merchants.find(merchant => merchant.name === "Luckin Coffee")?.totalCents).toBe(8460);
     expect(swapped.balance).toEqual(first.balance);
     expect(swapped.spending).toEqual(first.spending);
+    expect(swapped.income).toEqual(first.income);
+    expect(first.income).toMatchObject({ incomeCents: 240000, salaryCents: 240000, reimbursementCents: 3200, transferCents: 20000, refundCents: 1800, unresolvedCents: 4820 });
     expect(swapped.buckets).toEqual(first.buckets);
   });
   it("does not hardcode the sample balance or dates into consumers", async () => {

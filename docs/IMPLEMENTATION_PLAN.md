@@ -29,8 +29,10 @@ UI -> Pal services -> repository interface -> normalized account/transactions
 
 ## Milestones and gates
 
-1. **Foundation (this delivery only):** Next.js/TypeScript/Tailwind shell, `/pal`, normalized models and runtime schemas, FinancialProvider contract, DemoProvider, fail-closed Sandbox/normalizer placeholders, repository seam, minimal read-only dashboard arithmetic, environment example, integration docs and independent provider-swap tests. Lint, typecheck, unit tests, production build, and desktop/mobile render checks.
-2. **Finance engine:** Expand tested arithmetic to category changes, detailed merchant analytics, income/reimbursement separation, configurable periods, goals and allocation invariants. Preserve the provider-independent functions and add edge-case coverage.
+Milestones 1 and 2 are complete. Stopped at the milestone 2 boundary. Durable persistence and financial state changes remain milestone 3 and later. See [FINANCE_ENGINE.md](FINANCE_ENGINE.md) and [MILESTONE_2_REPORT.md](MILESTONE_2_REPORT.md) for behavior and validation.
+
+1. **Foundation (complete):** Next.js/TypeScript/Tailwind shell, `/pal`, normalized models and runtime schemas, FinancialProvider contract, DemoProvider, fail-closed Sandbox/normalizer placeholders, repository seam, minimal read-only dashboard arithmetic, environment example, integration docs and independent provider-swap tests. Lint, typecheck, unit tests, production build, and desktop/mobile render checks.
+2. **Finance engine (complete):** Expand tested arithmetic to category changes, detailed merchant analytics, income/reimbursement separation, configurable periods, goals and allocation invariants. Preserve the provider-independent functions and add edge-case coverage.
 3. **Persistence and ingestion:** Durable local/Supabase repository, authenticated ownership, bucket CRUD, remaining product entities, transactional/idempotent sync, normalized transaction lifecycle and pagination checkpoints, Quick Check and learned merchant rules. Test concurrent and replayed writes and ownership.
 4. **AI:** Server-only structured query/classification functions with Zod validation. Deterministic calculations answer all supported intents. Clearly identified fallback when no AI credentials are configured. Test malformed output and unsupported questions.
 5. **Confirmed actions:** Multiple reallocation scenarios, impact previews, ProposedAction approval/rejection/expiry, revalidation and atomic audit events. AI cannot mutate state. Test stale and repeated approvals.

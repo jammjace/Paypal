@@ -34,3 +34,27 @@ test("keyboard skip link reaches the dashboard", async ({ page }) => {
   await page.keyboard.press("Enter");
   await expect(page).toHaveURL(/#main$/);
 });
+
+test("merchant details and income breakdown expose deterministic analytics", async ({ page }, testInfo) => {
+  await page.goto("/pal");
+  await expect(page.getByRole("heading", { name: "Spending Pulse" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Spending Pulse" }).getByRole("list").getByText("Dining", { exact: true })).toBeVisible();
+  await page.getByText("Luckin Coffee", { exact: true }).click();
+  const details = page.getByRole("region", { name: "Luckin Coffee analytics" });
+  await expect(details.getByText("$7.05", { exact: true })).toBeVisible();
+  await expect(details.getByText("$61.20", { exact: true })).toBeVisible();
+  await expect(details.getByText("+38.2%", { exact: true })).toBeVisible();
+  await expect(details.getByText("100% of Coffee spending · $84.60", { exact: true })).toBeVisible();
+  await page.getByText("Income and money received", { exact: true }).click();
+  const income = page.getByRole("region", { name: "Income breakdown" });
+  await expect(income.getByText("$32.00", { exact: true })).toBeVisible();
+  await expect(income.getByText("$48.20", { exact: true })).toBeVisible();
+  await expect(income.getByText("$2,400.00", { exact: true })).toHaveCount(2);
+  await expect(income.getByText("$200.00", { exact: true })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)).toBe(false);
+  await page.screenshot({ path: testInfo.outputPath("expanded-analytics.png"), fullPage: true });
+  const summary = page.getByLabel("Details for Luckin Coffee", { exact: true });
+  await summary.focus();
+  await page.keyboard.press("Enter");
+  await expect(details).toBeHidden();
+});

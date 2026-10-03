@@ -15,7 +15,7 @@ Pal follows **AI interprets. Code calculates. User decides.**
 
 ESLint prevents imports from provider/fixture modules in domain, finance, services, UI and routes. `server-only` guards adapters, composition and repository implementation. Provider metadata never appears in the dashboard read model.
 
-## Milestone 1 data path
+## Current read-only data path
 
 Each read-only render creates demo fixtures in the server composition root, injects them into DemoProvider, and syncs normalized results to a fresh in-memory repository. The repository begins with zero balance/no transactions so financial values must pass through the provider. Pal buckets and allocation events are independently seeded product state, not provider data.
 
@@ -27,7 +27,7 @@ The repository contract deliberately hides the storage backend. In milestone 3, 
 
 Money inputs and outputs are safe integer cents. Summation and ratio intermediates use BigInt, with checked conversion to safe numbers. Percentage outputs are integer tenths of one percent. Decimal division is permitted for display/CSS only. Safe to Spend may be negative; it is never silently clamped.
 
-The initial finance module exists to render actual fixture-derived totals and prove adapter compatibility. Full category analytics, goal projections and mutation validation remain later milestones.
+Milestone 2 separates checked money utilities, configurable periods, merchant/category analytics, incoming-money partitions, allocation impact validation and fixed-interval goal funding projections. These functions are pure; proposal approval, writes and full Future You timelines remain later milestones. See [FINANCE_ENGINE.md](FINANCE_ENGINE.md) for formulas, rounding, edge cases and assumptions.
 
 ## Later write path
 
