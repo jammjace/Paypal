@@ -40,6 +40,8 @@ The latest successfully committed UTC sync window is stored with the snapshot. T
 
 ## Seed, reset and limitations
 
+Milestone 5 adds typed savings proposal details to existing v2 records without dropping historical placeholders. Preview creation writes an audit event but no allocation. Approval atomically commits the chosen option, savings changes, allocation events and final status. Real-time expiry and a financial-state fingerprint protect against stale previews; repeated approvals are no-ops and sibling options cannot both apply. See [CONFIRMED_ACTIONS.md](CONFIRMED_ACTIONS.md).
+
 `npm run dev` plus Start my demo seeds one workspace using the existing deterministic fixture path. Normal reads never reseed. Demo controls → Confirm reset replaces only the current workspace with the baseline and keeps its revision monotonic. Reset intentionally clears its changes, learned rules, receipts and audit history; other owners and session tokens remain intact. Changing DEMO_AS_OF affects new/reset demos, not existing data.
 
 SQLite files need durable local disk; this adapter is unsuitable for ephemeral/serverless multi-host storage. No Supabase configuration, password authentication, autonomous rules, recurring allocations or real PayPal calls are included. Sandbox integration remains required later and must consult APIMatic/current official docs before implementation.

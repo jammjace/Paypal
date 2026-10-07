@@ -2,7 +2,7 @@
 
 A financial co-pilot prototype for the PayPal AI Hackathon 2026. One balance, virtual money buckets, and a clearer view of spending.
 
-**Milestones 3 and 4:** persistent savings goals and period-based spending budgets, working Ask Pal with optional free local Qwen3 4B interpretation and an explicit offline fallback, Quick Check, merchant rules and normalized transaction ingestion. No real PayPal calls are made. The revised bucket definition is documented in [BUCKETS.md](docs/BUCKETS.md) and supersedes the original earmark-only examples in [PAL_PRODUCT_SPEC.md](PAL_PRODUCT_SPEC.md).
+**Milestones 3–5:** persistent savings goals and period-based spending budgets, working Ask Pal with optional free local Qwen3 4B interpretation and an explicit offline fallback, Quick Check, merchant rules, normalized transaction ingestion, and savings proposals with explicit approval. No real PayPal calls are made. The revised bucket definition is documented in [BUCKETS.md](docs/BUCKETS.md) and supersedes the original earmark-only examples in [PAL_PRODUCT_SPEC.md](PAL_PRODUCT_SPEC.md).
 
 ## Run locally
 
@@ -43,7 +43,7 @@ npm start
 - Original celestial Pal mark, responsive layout, keyboard navigation, semantic sections, loading and error states.
 - An independent alternative provider test confirms identical finance results despite different source IDs, ordering and page sizes.
 
-Ask Pal answers balance, spending comparison, merchant/category, income and bucket questions. Local model interpretation is optional; without Ollama the UI labels its limited local fallback. Savings carry forward, while budget allowances reset weekly/monthly. Monthly contributions are plans confirmed manually. Future You and AI-generated action proposals remain deferred.
+Ask Pal answers balance, spending comparison, merchant/category, income and bucket questions. Local model interpretation is optional; without Ollama the UI labels its limited local fallback. Savings carry forward, while budget allowances reset weekly/monthly. Monthly contributions are plans confirmed manually. Ask Pal can prepare savings proposals with multiple funding options, impact previews, approval/rejection, expiry and audit history. Future You remains milestone 6. See [Confirmed actions](docs/CONFIRMED_ACTIONS.md).
 
 ## Stack and architecture
 
@@ -98,6 +98,8 @@ Real Sandbox data/event flow is **required** in milestone 7. APIMatic context wa
 See [PAYPAL_INTEGRATION.md](docs/PAYPAL_INTEGRATION.md) for the boundary, pending capabilities, environment setup and mandatory submission evidence. A stub is not a completed integration.
 
 ## Next milestones
+
+Milestone 5 is complete; see the [delivery report](docs/MILESTONE_5_REPORT.md). Next is **Milestone 6: Future You**, followed by the required PayPal Sandbox integration. Public model hosting remains deferred.
 
 The [revised implementation plan](docs/IMPLEMENTATION_PLAN.md) covers finance, persistence, structured AI, confirmed actions, projections, required Sandbox integration and submission readiness. AI design is documented in [AI_DESIGN.md](docs/AI_DESIGN.md).
 

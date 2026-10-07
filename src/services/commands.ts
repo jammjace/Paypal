@@ -1,8 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { categorySchema, centsSchema } from "@/domain/models";
-import { bucketFieldsSchema, type Workspace, type PalEvent } from "@/domain/workspace";
-import { previewAllocation } from "@/finance/allocations";
+import { bucketFieldsSchema } from "@/domain/workspace";
+import { applyAllocation as allocate, recordEvent as event } from "./mutations";
 import type { MutablePalRepository } from "@/repositories/MutablePalRepository";
 import { classificationOptions, merchantPattern } from "./classification";
 
@@ -20,19 +20,6 @@ export type PalCommand = z.infer<typeof commandSchema>;
 export const mutationSchema = z.object({ command: commandSchema, revision: z.number().int().nonnegative(), requestId: z.string().uuid() }).strict();
 export type Mutation = z.infer<typeof mutationSchema>;
 export class CommandError extends Error {}
-
-function event(state: Workspace, kind: PalEvent["kind"], reason: string, at: string, bucketId: string | null = null, transactionId: string | null = null, deltaCents: number | null = null) {
-  state.events.push({ id: randomUUID(), userId: state.user.id, kind, reason, bucketId, transactionId, deltaCents, createdAt: at });
-}
-function allocate(state: Workspace, changes: { bucketId: string; deltaCents: number }[], reason: string, at: string) {
-  const preview = previewAllocation(state.account.currentBalanceCents, state.buckets, changes, state.user.id);
-  state.buckets = preview.buckets;
-  for (const impact of preview.changes) {
-    const entry = { id: randomUUID(), userId: state.user.id, ...impact, reason, createdAt: at };
-    state.activity.push(entry);
-    event(state, "ALLOCATION", reason, at, impact.bucketId, null, impact.deltaCents);
-  }
-}
 
 /** Validation, mutation, idempotency receipt and audit trail share one commit. */
 export async function executeCommand(repository: MutablePalRepository, userId: string, input: unknown): Promise<string> {
@@ -72,6 +59,7 @@ export async function executeCommand(repository: MutablePalRepository, userId: s
         const bucket = state.buckets.find(b => b.id === command.bucketId && b.status === "ACTIVE");
         if (!bucket) throw new CommandError("Bucket not found.");
         if (state.buckets.some(b => b.id !== bucket.id && b.status === "ACTIVE" && b.name.toLowerCase() === command.name.toLowerCase())) throw new CommandError("An active bucket already has that name.");
+        if (bucket.type === "SPENDING" && (bucket.targetAmountCents !== command.targetAmountCents || bucket.budgetPeriod !== command.budgetPeriod || bucket.category !== command.category)) delete bucket.limitOverride;
         Object.assign(bucket, bucketFieldsSchema.parse({ ...command, type: command.bucketType }));
         event(state, "BUCKET_EDITED", `${bucket.name} details updated`, at, bucket.id);
         message = "Bucket details saved.";

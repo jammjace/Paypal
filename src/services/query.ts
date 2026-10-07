@@ -59,7 +59,7 @@ export function answerQuery(state: PalSnapshot, input: unknown): string {
       if (query.period !== "MONTH_TO_DATE") return "Bucket answers show the current saved balance or current budget period. Historical bucket snapshots are not available yet.";
       const b = buckets[0], progress = bucketProgress(b, transactions, state.asOf);
       if (progress.kind === "GOAL") return `${b.name}: ${money(progress.savedCents)} saved${b.targetAmountCents > 0 ? ` toward ${money(b.targetAmountCents)}; ${money(progress.remainingCents)} to go` : " (no total target)"}. Planned monthly addition: ${money(progress.monthlyContributionCents)}. Savings carry forward; additions require your confirmation.`;
-      return `${b.name}: ${money(progress.spentCents)} spent of a ${money(b.targetAmountCents)} ${b.budgetPeriod === "WEEKLY" ? "weekly" : "monthly"} limit; ${money(Math.abs(progress.remainingCents))} ${progress.remainingCents < 0 ? "over budget" : "left to spend"}. This allowance is not reserved cash. Unclassified purchases can change the result after review.`;
+      return `${b.name}: ${money(progress.spentCents)} spent of a ${money(progress.limitCents)} ${b.budgetPeriod === "WEEKLY" ? "weekly" : "monthly"} limit; ${money(Math.abs(progress.remainingCents))} ${progress.remainingCents < 0 ? "over budget" : "left to spend"}. This allowance is not reserved cash. Unclassified purchases can change the result after review.`;
     }
     case "MERCHANT": {
       const names = queryContext(state).merchants.filter(n => key(n) === key(query.entity ?? ""));
@@ -80,7 +80,7 @@ export function answerQuery(state: PalSnapshot, input: unknown): string {
       const i = incomeSummary(transactions, period);
       return `${label}: ${money(i.incomeCents)} income, ${money(i.reimbursementCents)} reimbursements, ${money(i.transferCents)} transfers, ${money(i.refundCents)} refunds, ${money(i.giftCents)} gifts and ${money(i.unresolvedCents)} awaiting classification. Saved balances cannot be attributed to a specific month's income.`;
     }
-    case "ACTION": return "I cannot change money through Ask Pal yet. Open a savings goal to preview and confirm an addition or withdrawal. AI action proposals arrive in Milestone 5.";
+    case "ACTION": return "I cannot change money without your approval. Try ‘Add $200 to Travel’ or ‘Move $50 from Travel to Christmas’. For unclear requests, use Review changes to select the savings goals and amount. Spending budgets are limits, not funds to move; edit their limits separately.";
     default: return "I can explain Safe to Spend, compare this month with the same days last month, show merchant/category spending or income for this or last month, and check a current budget or savings goal. Please ask one of these questions with a specific name.";
   }
 }

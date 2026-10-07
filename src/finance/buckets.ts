@@ -15,7 +15,8 @@ export function bucketProgress(bucket: Bucket, transactions: readonly Transactio
   const rows = transactions.filter(tx => tx.transactionDate <= asOf);
   const spentCents = sumCents(spendingInPeriod(rows, { from: start.toISOString(), to: end.toISOString() })
     .filter(tx => tx.category === bucket.category).map(tx => tx.amountCents));
-  const remainingCents = subtractCents(bucket.targetAmountCents, spentCents);
-  return { kind: "SPENDING" as const, spentCents, remainingCents, from: start.toISOString(), to: end.toISOString(),
+  const limitCents = bucket.limitOverride?.from === start.toISOString() && bucket.limitOverride.to === end.toISOString() ? bucket.limitOverride.amountCents : bucket.targetAmountCents;
+  const remainingCents = subtractCents(limitCents, spentCents);
+  return { kind: "SPENDING" as const, spentCents, remainingCents, limitCents, from: start.toISOString(), to: end.toISOString(),
     status: remainingCents < 0 ? "OVER_BUDGET" : remainingCents === 0 ? "LIMIT_REACHED" : "WITHIN_BUDGET" };
 }

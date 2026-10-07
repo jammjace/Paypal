@@ -1,3 +1,5 @@
+import { reallocationDetailsSchema } from "./proposals";
+import { recurringEventSchema, scenarioSchema, clarificationSchema } from "./future";
 import { z } from "zod";
 import { accountSchema, categorySchema, centsSchema, timestampSchema, transactionSchema, type PalSnapshot } from "./models";
 
@@ -10,7 +12,7 @@ export const bucketFieldsSchema = z.object({
   targetAmountCents: nonnegative, targetDate: timestampSchema.nullable(),
   recurrence: z.enum(["MONTHLY"]).nullable(), priority: z.number().int().min(1).max(10),
 });
-export const bucketSchema = bucketFieldsSchema.extend({ id, userId: id, allocatedAmountCents: nonnegative, status: z.enum(["ACTIVE", "ARCHIVED"]) });
+export const bucketSchema = bucketFieldsSchema.extend({ id, userId: id, allocatedAmountCents: nonnegative, status: z.enum(["ACTIVE", "ARCHIVED"]), limitOverride: z.object({ amountCents: nonnegative, from: timestampSchema, to: timestampSchema }).optional() });
 export const merchantRuleSchema = z.object({
   id, userId: id, merchantPattern: z.string(), normalizedMerchant: z.string(), category: categorySchema,
   confidence: z.number().min(0).max(1), learnedFromUser: z.boolean(),
@@ -18,13 +20,16 @@ export const merchantRuleSchema = z.object({
 });
 export type MerchantRule = z.infer<typeof merchantRuleSchema>;
 export const palEventSchema = z.object({
-  id, userId: id, kind: z.enum(["ALLOCATION", "BUCKET_CREATED", "BUCKET_EDITED", "BUCKET_ARCHIVED", "CATEGORIZATION", "SYNC"]),
+  id, userId: id, kind: z.enum(["ALLOCATION", "BUCKET_CREATED", "BUCKET_EDITED", "BUCKET_ARCHIVED", "CATEGORIZATION", "SYNC", "PROPOSAL"]),
   bucketId: id.nullable(), transactionId: id.nullable(), deltaCents: centsSchema.nullable(),
   reason: z.string(), createdAt: timestampSchema,
 });
 export type PalEvent = z.infer<typeof palEventSchema>;
 export const workspaceSchema = z.object({
   schemaVersion: z.literal(2), revision: z.number().int().nonnegative(),
+  recurringEvents: z.array(recurringEventSchema).default([]),
+  futureScenarios: z.array(scenarioSchema).default([]),
+  clarifications: z.array(clarificationSchema).default([]),
   user: z.object({ id, name: z.string(), currency: z.literal("USD"), createdAt: timestampSchema }),
   account: accountSchema, transactions: z.array(transactionSchema), asOf: timestampSchema,
   buckets: z.array(bucketSchema),
@@ -32,7 +37,7 @@ export const workspaceSchema = z.object({
   events: z.array(palEventSchema), merchantRules: z.array(merchantRuleSchema),
   transactionAllocations: z.array(z.object({ id, transactionId: id, bucketId: id, amountCents: nonnegative })),
   allocationRules: z.array(z.object({ id, userId: id, bucketId: id, triggerType: z.enum(["INCOME", "SCHEDULE"]), amountType: z.enum(["FIXED", "BASIS_POINTS"]), amountValue: nonnegative, priority: z.number().int() })),
-  proposedActions: z.array(z.object({ id, userId: id, type: z.string(), payloadJson: z.record(z.string(), z.unknown()), impactJson: z.record(z.string(), z.unknown()), status: z.enum(["PENDING", "APPROVED", "REJECTED", "EXPIRED"]), createdAt: timestampSchema })),
+  proposedActions: z.array(z.object({ reallocation: reallocationDetailsSchema.optional(), id, userId: id, type: z.string(), payloadJson: z.record(z.string(), z.unknown()), impactJson: z.record(z.string(), z.unknown()), status: z.enum(["PENDING", "APPROVED", "REJECTED", "EXPIRED"]), createdAt: timestampSchema })),
   conversations: z.array(z.object({ id, userId: id, createdAt: timestampSchema })),
   receipts: z.array(z.object({ requestId: id, command: z.string(), message: z.string() })),
   syncWindow: z.object({ from: timestampSchema, to: timestampSchema }).nullable(),

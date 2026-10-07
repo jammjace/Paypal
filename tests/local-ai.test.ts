@@ -3,11 +3,19 @@ import { createDemoFixture } from "@/fixtures/demo";
 import { workspaceFromSnapshot } from "@/domain/workspace";
 import { askPal, classifyTransaction } from "@/server/ai/pal";
 import { OllamaInterpreter } from "@/server/ai/structured";
+import { interpretAction } from "@/server/ai/actions";
 
 // Explicit opt-in only. Ordinary tests never require a downloaded model.
 describe.skipIf(process.env.PAL_RUN_LOCAL_AI_TESTS !== "1")("live local Qwen3 4B", () => {
   const state = workspaceFromSnapshot(createDemoFixture({ userId: "local-eval", accountId: "sample", connectionId: "sample" }, "2026-10-15T18:00:00.000Z"));
   const interpreter = new OllamaInterpreter();
+  it("extracts a savings preview from natural phrasing without moving money", async () => {
+    const before = structuredClone(state);
+    let observed: unknown;
+    const draft = await interpretAction(state, "Could you set aside $200 for Travel?", { generate: async (schema, instructions, input) => { const result = await interpreter.generate(schema, instructions, input); observed = result; return result; } });
+    expect(draft, JSON.stringify(observed)).toEqual({ amountCents: 20000, destinationBucketId: "travel", sourceBucketId: null, funding: "AUTO" });
+    expect(state).toEqual(before);
+  }, 60000);
   it.each([
     ["How much can I still spend from my Coffee budget?", "$15.40 left to spend"],
     ["What have I put away for Travel, and what is my monthly contribution plan?", "$420.00 saved"],

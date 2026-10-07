@@ -1,6 +1,6 @@
 # Milestone 4: Ask Pal and classification
 
-AI interprets; code calculates; the user decides. Ask Pal is now a working read-only form with prompt buttons, pending/error states and clearly labeled results. It operates on the server-resolved workspace only.
+AI interprets; code calculates; the user decides. Ask Pal answers questions and, as of milestone 5, creates reviewable savings proposals with no immediate financial mutation. It operates on the server-resolved workspace only.
 
 ## Query path
 
@@ -10,7 +10,7 @@ The model receives the question and bucket/merchant/category names, not financia
 
 Queries cover Safe to Spend, equivalent calendar-day comparisons, merchant total/count/average, category totals, top merchant, income partitions, current spending-budget allowance and current savings progress/contribution plan. Previous-month spending queries use that full calendar month. Current results use the normalized snapshot clock, not the host clock. Historical balances and historical bucket snapshots are unsupported. Data is limited to stored provider coverage; provisional categories participate and unclassified purchases may change category totals after review. Gross spend excludes transfers/refunds, following existing analytics policy.
 
-ACTION recognizes money-change requests but cannot execute them or create approvals. It directs the user to explicit savings forms. ProposedAction tradeoffs, approval and expiry belong to milestone 5. Ask Pal does not mutate financial state or persist chat transcripts. Each question is standalone; follow-up pronouns/context are not supported.
+ACTION extracts a normalized one-time savings request, using a strict local grammar or a second structured local-model call. Explicit amounts and bucket names must be grounded in the question. The server persists deterministic funding options for review; AI cannot approve them. The user separately selects and approves an option on `/pal/actions`. See [CONFIRMED_ACTIONS.md](CONFIRMED_ACTIONS.md) for expiry, revalidation and atomic audit behavior. Ask Pal does not move money or persist chat transcripts. Each question is standalone; follow-up pronouns/context are not supported. `askPalAction` accepts a validated question and UUID request ID to deduplicate preview creation.
 
 ## Free local-only inference and fallback
 
@@ -61,3 +61,5 @@ Eight live local-model acceptance checks passed in approximately 52 seconds tota
 Run `npm run test:ai:browser` after building to verify a real question through the dashboard. Local inference is sequential; avoid running both live suites at once on this machine.
 
 A production-build desktop browser check also passed with real model inference: the dashboard displayed **Local AI (Qwen3 4B)** and **$15.40 left to spend** for the Coffee budget. No fallback response was accepted by the test.
+
+Milestone 5 verification (2026-10-07) adds a grounded action-extraction test and extends the real-model browser check: “Could you set aside $200 for Travel?” creates deterministic funding options with a separate approval button. The prompt explicitly distinguishes the funding source from the savings destination; omitted sources use AUTO. The model still cannot apply the preview.

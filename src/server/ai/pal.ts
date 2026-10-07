@@ -6,6 +6,7 @@ import { querySchema, parseLocalQuery, queryContext, answerQuery } from "@/servi
 import { classificationOptions, classifyWithRules, CONFIDENCE } from "@/services/classification";
 import { readConfig } from "../config";
 import { OllamaInterpreter, type StructuredInterpreter } from "./structured";
+import { interpretAction } from "./actions";
 
 export function configuredInterpreter(): StructuredInterpreter | null {
   const config = readConfig();
@@ -16,6 +17,7 @@ export async function askPal(state: Workspace, question: string, interpreter: St
   const context = queryContext(state);
   let query, mode: "Local AI (Qwen3 4B)" | "Local fallback" = "Local fallback";
   let notice = "Local fallback uses a limited question grammar; no AI was called.";
+  let modelFailed = false;
   if (interpreter) {
     try {
       query = querySchema.parse(await interpreter.generate(querySchema,
@@ -32,10 +34,17 @@ UNSUPPORTED: predictions, investment advice, unrelated topics, ambiguous entitie
 Use period MONTH_TO_DATE unless an actual spending/income question explicitly requests last calendar month; then PREVIOUS_MONTH. Comparisons and current buckets/balances use MONTH_TO_DATE. Only select entities supplied in context.`,
         { question, context, bucketTypes: state.buckets.filter(b => b.status === "ACTIVE").map(b => ({ name: b.name, type: b.type })) }));
       mode = "Local AI (Qwen3 4B)"; notice = "Qwen3 4B interpreted your question locally. Pal calculated every amount.";
-    } catch { notice = "AI unavailable or response invalid. Using the limited local fallback."; }
+    } catch (error) {
+      modelFailed = true;
+      notice = error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError")
+        ? "The local model timed out after 45 seconds. Using local rules; this is not an unsupported-question diagnosis."
+        : "The local model returned an invalid response or was unavailable. Using local rules; this is separate from whether the request is supported.";
+    }
   }
   query ??= parseLocalQuery(question, context);
-  return { answer: answerQuery(state, query), mode, notice, asOf: state.asOf };
+  const actionDraft = query.intent === "ACTION" ? await interpretAction(state, question, interpreter) : null;
+  const status = modelFailed ? "AI_FAILURE" as const : query.intent === "UNSUPPORTED" ? "UNSUPPORTED" as const : actionDraft ? "PREVIEW" as const : "ANSWER" as const;
+  return { answer: actionDraft ? "I cannot change money without your approval. Review the funding options and confirm one to update your savings." : answerQuery(state, query), mode, notice, asOf: state.asOf, actionDraft, status };
 }
 export const classificationSchema = z.object({ category: categorySchema, normalizedMerchant: z.string(), confidence: z.number().min(0).max(1) }).strict();
 export async function classifyTransaction(tx: Transaction, rules: MerchantRule[], interpreter: StructuredInterpreter | null): Promise<Transaction> {

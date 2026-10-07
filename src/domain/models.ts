@@ -44,6 +44,7 @@ export interface Bucket {
   id: string; userId: string; name: string; category: string;
   type: "SPENDING" | "GOAL";
   budgetPeriod?: "WEEKLY" | "MONTHLY"; monthlyContributionCents?: MoneyCents;
+  limitOverride?: { amountCents: MoneyCents; from: string; to: string };
   allocatedAmountCents: MoneyCents; targetAmountCents: MoneyCents;
   targetDate: string | null; recurrence: "MONTHLY" | null;
   priority: number; status: "ACTIVE" | "ARCHIVED";

@@ -1,0 +1,61 @@
+import { expect, test } from "@playwright/test";
+
+test.beforeEach(async ({ page }) => {
+  await page.goto("/pal");
+  await page.getByRole("button", { name: "Start my demo" }).click();
+  await expect(page.getByRole("heading", { name: "Your buckets" })).toBeVisible();
+});
+test("Ask Pal previews several options; only approval changes savings", async ({ page }, info) => {
+  await page.getByRole("textbox", { name: "Ask Pal about your money" }).fill("Add $200 to Travel");
+  await page.getByRole("button", { name: "Send question" }).click();
+  await expect(page.getByRole("link", { name: "Review funding options" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Your money overview" })).toContainText("$550.00");
+  await page.getByRole("link", { name: "Review funding options" }).click();
+  const preview = page.getByRole("region", { name: /^Savings preview/ });
+  await expect(preview.getByRole("button", { name: /^Approve:/ })).toHaveCount(3);
+  await expect(preview).toContainText("$550.00 → $350.00");
+  await expect(preview).toContainText("$420.00 → $620.00 saved");
+  await expect(page.getByLabel("Funding source").locator("option", { hasText: "Coffee" })).toHaveCount(0);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)).toBe(false);
+  await page.screenshot({ path: info.outputPath("savings-preview.png"), fullPage: true });
+  await preview.getByRole("button", { name: "Approve: Use Safe to Spend", exact: true }).click();
+  await expect(preview).toContainText("APPROVED");
+  await expect(preview.getByRole("button", { name: /^Approve:/ })).toHaveCount(0);
+  await page.reload();
+  await expect(preview).toContainText("APPROVED");
+  await page.getByRole("link", { name: "Pal dashboard", exact: true }).click();
+  await expect(page.getByRole("region", { name: "Your money overview" })).toContainText("$350.00");
+  const travel = page.getByRole("article").filter({ has: page.getByRole("heading", { name: "Travel", exact: true }) });
+  await expect(travel).toContainText("$620.00");
+});
+test("manual preview supports rejection and an explicit savings withdrawal", async ({ page }) => {
+  await page.getByRole("link", { name: "Review changes", exact: true }).click();
+  await page.getByLabel("Amount ($)", { exact: true }).fill("25");
+  await page.getByLabel("Destination", { exact: true }).selectOption("");
+  await page.getByLabel("Funding source").selectOption("travel");
+  await page.getByRole("button", { name: "Create preview", exact: true }).click();
+  const preview = page.getByRole("region", { name: /^Savings preview/ });
+  await expect(preview).toContainText("$550.00 → $575.00");
+  await preview.getByRole("button", { name: "Reject this preview" }).click();
+  await expect(preview).toContainText("REJECTED");
+  await page.reload();
+  await expect(preview).toContainText("REJECTED");
+  await page.getByRole("link", { name: "Pal dashboard", exact: true }).click();
+  await expect(page.getByRole("region", { name: "Your money overview" })).toContainText("$550.00");
+});
+test("a saved preview expires after a separate savings change", async ({ page }) => {
+  await page.getByRole("link", { name: "Review changes", exact: true }).click();
+  await page.getByLabel("Amount ($)", { exact: true }).fill("25");
+  await page.getByLabel("Destination", { exact: true }).selectOption("travel");
+  await page.getByRole("button", { name: "Create preview", exact: true }).click();
+  await expect(page.getByRole("region", { name: /^Savings preview/ })).toContainText("PENDING");
+  await page.getByRole("link", { name: "Pal dashboard", exact: true }).click();
+  await page.getByRole("link", { name: "Travel", exact: true }).click();
+  await page.getByLabel("Amount (USD)", { exact: true }).fill("10");
+  await page.getByRole("button", { name: "Confirm allocation", exact: true }).click();
+  await expect(page.getByText("$430.00 saved", { exact: true })).toBeVisible();
+  await page.getByRole("link", { name: "Review changes", exact: true }).click();
+  const preview = page.getByRole("region", { name: /^Savings preview/ });
+  await expect(preview).toContainText("EXPIRED");
+  await expect(preview.getByRole("button", { name: /^Approve:/ })).toHaveCount(0);
+});

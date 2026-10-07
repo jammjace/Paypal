@@ -4,6 +4,7 @@ import { balanceSummary, spendingSummary } from "@/finance/dashboard";
 import { incomeSummary } from "@/finance/analytics";
 import { timestampSchema } from "@/domain/models";
 import type { Workspace } from "@/domain/workspace";
+import { pendingClarification } from "./copilot";
 
 /** Provider-independent consumer; receives a repository, never an SDK client. */
 export async function getDashboard(repository: PalRepository, userId: string) {
@@ -13,6 +14,7 @@ export async function getDashboard(repository: PalRepository, userId: string) {
   const spending = spendingSummary(transactions, cutoff);
   return {
     user: snapshot.user,
+    pendingClarification: "clarifications" in snapshot ? pendingClarification(snapshot as Workspace) : null,
     currency: snapshot.account.currency,
     asOf: snapshot.asOf,
     balance: balanceSummary(snapshot.account.currentBalanceCents, snapshot.buckets),

@@ -9,6 +9,11 @@ import { currentContext, SESSION_COOKIE } from "./context";
 import { createDemoSession, resetDemo, syncWorkspace } from "./demo";
 import { askPal, configuredInterpreter } from "./ai/pal";
 import { readConfig } from "./config";
+import { createProposal, moneyFingerprint, ProposalError, resolveProposal } from "@/services/proposals";
+import { reallocationRequestSchema } from "@/domain/proposals";
+import { enhancedCopilot, type CopilotReply } from "@/services/copilot";
+import { createScenario, decideScenario } from "@/services/future";
+import { interpretCopilot } from "./ai/copilot";
 
 export type ActionResult = { ok: boolean; message: string };
 export async function startDemoAction() {
@@ -47,11 +52,68 @@ export async function resetDemoAction() {
   redirect("/pal");
 }
 
-export async function askPalAction(input: unknown) {
-  const question = z.string().trim().min(1).max(500).parse(input);
+export async function askPalAction(input: unknown): Promise<CopilotReply> {
+  const { question, requestId, clarificationId } = z.object({ question: z.string().trim().min(1).max(500), requestId: z.string().uuid(), clarificationId: z.string().nullable().optional() }).strict().parse(input);
   const context = await currentContext();
   if (!context) throw new Error("Session expired. Refresh Pal.");
+  try {
+    const interpreted = clarificationId ? null : await interpretCopilot(await context.repository.read(context.userId), question, configuredInterpreter());
+    const enhanced = await enhancedCopilot(context.repository, context.userId, question, requestId, clarificationId, new Date(), interpreted?.request);
+    if (enhanced) {
+      if (enhanced.scenarioId) revalidatePath("/pal/future");
+      return interpreted ? { ...enhanced, mode: interpreted.mode, notice: interpreted.notice } : enhanced;
+    }
+  } catch (error) {
+    return { answer: error instanceof Error ? error.message : "Unable to prepare this request.", mode: "Pal calculation", notice: "No change was applied. Try a smaller amount or review your sources.", status: "UNSUPPORTED", asOf: (await context.repository.read(context.userId)).asOf, proposalId: null };
+  }
   const state = await context.repository.read(context.userId);
   const result = await askPal(state, question, configuredInterpreter());
-  return result;
+  if (!result.actionDraft) return { ...result, proposalId: null };
+  try {
+    const proposal = await createProposal(context.repository, context.userId, result.actionDraft, requestId, moneyFingerprint(state));
+    revalidatePath("/pal/actions");
+    return { ...result, proposalId: proposal.id };
+  } catch (error) {
+    return { ...result, proposalId: null, answer: error instanceof ProposalError ? error.message : "Unable to create a preview. Open Review changes and try again." };
+  }
+}
+
+export async function previewFutureAction(input: unknown): Promise<ActionResult> {
+  const context = await currentContext();
+  if (!context) return { ok: false, message: "Session expired. Refresh Pal." };
+  try {
+    await createScenario(context.repository, context.userId, input);
+    revalidatePath("/pal/future");
+    return { ok: true, message: "Scenario ready below. Review its impact before applying." };
+  } catch (error) { return { ok: false, message: error instanceof Error ? error.message : "Unable to preview this change." }; }
+}
+export async function decideFutureAction(input: unknown): Promise<ActionResult> {
+  const context = await currentContext();
+  if (!context) return { ok: false, message: "Session expired. Refresh Pal." };
+  try {
+    const result = await decideScenario(context.repository, context.userId, input);
+    revalidatePath("/pal", "layout");
+    return result;
+  } catch (error) { return { ok: false, message: error instanceof Error ? error.message : "Unable to apply this scenario." }; }
+}
+
+export async function previewSavingsAction(input: unknown): Promise<ActionResult> {
+  const context = await currentContext();
+  if (!context) return { ok: false, message: "Session expired. Refresh Pal." };
+  try {
+    const parsed = z.object({ request: reallocationRequestSchema, requestId: z.string().uuid() }).strict().parse(input);
+    const state = await context.repository.read(context.userId);
+    await createProposal(context.repository, context.userId, parsed.request, parsed.requestId, moneyFingerprint(state));
+    revalidatePath("/pal/actions");
+    return { ok: true, message: "Preview created below. No money moved. Choose one option to approve." };
+  } catch (error) { return { ok: false, message: error instanceof ProposalError ? error.message : "Check the goals and amount, then try again." }; }
+}
+export async function decideProposalAction(input: unknown): Promise<ActionResult> {
+  const context = await currentContext();
+  if (!context) return { ok: false, message: "Session expired. Refresh Pal." };
+  try {
+    const result = await resolveProposal(context.repository, context.userId, input);
+    revalidatePath("/pal", "layout");
+    return result;
+  } catch (error) { return { ok: false, message: error instanceof ProposalError ? error.message : "Unable to approve. Refresh and review the preview again." }; }
 }

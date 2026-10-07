@@ -27,11 +27,13 @@ Server Actions validate commands, revision and idempotency keys. A repository tr
 
 Money inputs and outputs are safe integer cents. Summation and ratio intermediates use BigInt, with checked conversion to safe numbers. Percentage outputs are integer tenths of one percent. Decimal division is permitted for display/CSS only. Safe to Spend may be negative; it is never silently clamped.
 
-Milestone 2 separates checked money utilities, configurable periods, merchant/category analytics, incoming-money partitions, allocation impact validation and fixed-interval goal funding projections. These functions are pure; proposal approval, writes and full Future You timelines remain later milestones. See [FINANCE_ENGINE.md](FINANCE_ENGINE.md) for formulas, rounding, edge cases and assumptions.
+Milestone 2 separates checked money utilities, configurable periods, merchant/category analytics, incoming-money partitions, allocation impact validation and fixed-interval goal funding projections. These functions remain pure; milestone 5 adds a separate transactional approval service. Full Future You timelines remain milestone 6. See [FINANCE_ENGINE.md](FINANCE_ENGINE.md) for formulas, rounding, edge cases and assumptions.
 
-## Later AI write path
+## Confirmed action path (milestone 5)
 
 User question -> validated structured AI intent -> deterministic calculation -> ProposedAction -> explicit confirmation -> revalidation/atomic mutation -> AllocationEvent. No LLM gets direct repository mutation capability. Simulation state remains separate until approved.
+
+One persisted proposal contains mutually exclusive options. A 15-minute wall-clock expiry and a financial-state fingerprint prevent stale approvals; a transaction commits exactly one option, its audit and final status. Spending-budget limits never fund savings. See [CONFIRMED_ACTIONS.md](CONFIRMED_ACTIONS.md).
 
 ## Current limitations
 
