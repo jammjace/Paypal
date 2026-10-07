@@ -9,3 +9,6 @@ coverage/
 *.log
 test-results/
 .local/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm

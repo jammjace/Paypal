@@ -2,6 +2,9 @@ import "server-only";
 import { z } from "zod";
 
 const configSchema = z.object({
+  PAL_AI_MODE: z.enum(["local", "ollama"]).default("local"),
+  PAL_DB_PATH: z.string().min(1).default(".local/pal.sqlite"),
+  PAL_COOKIE_SECURE: z.enum(["true", "false"]).default("false"),
   FINANCIAL_PROVIDER: z.enum(["demo", "paypal-sandbox"]).default("demo"),
   DEMO_AS_OF: z.iso.datetime().default("2026-10-15T18:00:00.000Z"),
   PAYPAL_ENV: z.literal("sandbox").default("sandbox"),

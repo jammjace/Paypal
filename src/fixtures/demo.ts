@@ -35,10 +35,10 @@ export function createDemoFixture(binding: ProviderBinding, asOf: string): PalSn
   add(0, 14, "Alex", 4820, "Uncategorized", { rawDescription: "ALEX", direction: "IN", transactionType: "PEER_PAYMENT", categorizationConfidence: 0.3, categorizationSource: "UNCLASSIFIED", needsReview: true });
   add(0, 12, "SHEIN", 1800, "Refund", { direction: "IN", transactionType: "REFUND" });
   const buckets: Bucket[] = [
-    { id: "rent", name: "Rent", category: "Housing", type: "BILL", allocatedAmountCents: 120000, targetAmountCents: 120000, targetDate: date(1, 1), recurrence: "MONTHLY", priority: 1 },
+    { id: "rent", name: "Rent", category: "Housing", type: "GOAL", allocatedAmountCents: 120000, targetAmountCents: 120000, targetDate: date(1, 1), recurrence: "MONTHLY", priority: 1 },
     { id: "christmas", name: "Christmas", category: "Gifts", type: "GOAL", allocatedAmountCents: 26000, targetAmountCents: 40000, targetDate: date(2, 15), recurrence: null, priority: 3 },
-    { id: "travel", name: "Travel", category: "Travel", type: "GOAL", allocatedAmountCents: 42000, targetAmountCents: 100000, targetDate: date(5, 1), recurrence: null, priority: 4 },
-    { id: "coffee", name: "Coffee", category: "Coffee", type: "SPENDING", allocatedAmountCents: 6400, targetAmountCents: 10000, targetDate: date(1, 1), recurrence: "MONTHLY", priority: 5 },
+    { id: "travel", name: "Travel", category: "Travel", type: "GOAL", monthlyContributionCents: 20000, allocatedAmountCents: 42000, targetAmountCents: 100000, targetDate: date(5, 1), recurrence: null, priority: 4 },
+    { id: "coffee", name: "Coffee", category: "Coffee", type: "SPENDING", allocatedAmountCents: 0, targetAmountCents: 10000, targetDate: date(1, 1), recurrence: "MONTHLY", priority: 5 },
   ].map(bucket => ({ ...bucket, userId: user.id, status: "ACTIVE" }) as Bucket);
   const activity: AllocationEvent[] = [
     { id: "event-1", userId: user.id, bucketId: "christmas", deltaCents: 15000, previousAmountCents: 11000, newAmountCents: 26000, reason: "Added to Christmas", createdAt: date(0, 14) },

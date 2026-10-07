@@ -12,7 +12,10 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:browser": "playwright test",
-    "check": "npm run lint && npm run typecheck && npm test && npm run build"
+    "check": "npm run lint && npm run typecheck && npm test && npm run build",
+    "ai:start": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-local-ai.ps1",
+    "test:ai": "node scripts/check-local-ai.mjs",
+    "test:ai:browser": "node scripts/check-local-ai.mjs --browser"
   },
   "dependencies": {
     "lucide-react": "^0.577.0",

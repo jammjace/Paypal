@@ -42,7 +42,8 @@ export type Category = z.infer<typeof categorySchema>;
 export interface User { id: string; name: string; currency: Currency; createdAt: string }
 export interface Bucket {
   id: string; userId: string; name: string; category: string;
-  type: "BILL" | "SPENDING" | "GOAL" | "FLEXIBLE";
+  type: "SPENDING" | "GOAL";
+  budgetPeriod?: "WEEKLY" | "MONTHLY"; monthlyContributionCents?: MoneyCents;
   allocatedAmountCents: MoneyCents; targetAmountCents: MoneyCents;
   targetDate: string | null; recurrence: "MONTHLY" | null;
   priority: number; status: "ACTIVE" | "ARCHIVED";

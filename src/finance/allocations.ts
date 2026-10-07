@@ -7,6 +7,7 @@ function validateBuckets(buckets: readonly Bucket[]) {
   for (const bucket of buckets) {
     assertNonnegative(bucket.allocatedAmountCents);
     assertNonnegative(bucket.targetAmountCents);
+    if (bucket.type === "SPENDING" && bucket.allocatedAmountCents !== 0) throw new Error("Spending budgets cannot hold earmarks.");
     if (!bucket.id || ids.has(bucket.id)) throw new Error("Duplicate or missing bucket ID.");
     if (!bucket.userId || (owner !== undefined && bucket.userId !== owner)) throw new Error("Buckets must share one owner.");
     if (bucket.status !== "ACTIVE" && bucket.status !== "ARCHIVED") throw new Error("Unknown bucket status.");
@@ -35,6 +36,7 @@ export function previewAllocation(balanceCents: MoneyCents, buckets: readonly Bu
     changed.add(change.bucketId);
     const bucket = next.find(bucket => bucket.id === change.bucketId);
     if (!bucket || bucket.status !== "ACTIVE") throw new Error("Active bucket not found.");
+    if (bucket.type === "SPENDING") throw new Error("Allocate savings to a savings goal, not a spending limit.");
     const previousAmountCents = bucket.allocatedAmountCents;
     const newAmountCents = addCents(previousAmountCents, change.deltaCents);
     if (newAmountCents < 0) throw new Error("Source bucket has insufficient earmarks.");

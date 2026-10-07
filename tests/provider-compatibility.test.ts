@@ -40,7 +40,7 @@ describe("provider-independent finance behavior", () => {
   it("produces identical dashboard calculations with an independently implemented replacement provider", async () => {
     const first = await dashboardFrom(demo());
     const swapped = await dashboardFrom(new AlternateProvider());
-    expect(first.balance).toEqual({ balanceCents: 243000, earmarkedCents: 194400, safeToSpendCents: 48600 });
+    expect(first.balance).toEqual({ balanceCents: 243000, earmarkedCents: 188000, safeToSpendCents: 55000 });
     expect(first.spending.currentCents).toBe(74200);
     expect(first.spending.previousCents).toBe(89100);
     expect(first.spending.percentChangeTenths).toBe(-167);
@@ -56,7 +56,7 @@ describe("provider-independent finance behavior", () => {
     data.account.currentBalanceCents = 500000;
     const provider = new DemoProvider({ account: data.account, asOf: data.asOf }, data.transactions);
     const result = await dashboardFrom(provider);
-    expect(result.balance.safeToSpendCents).toBe(305600);
+    expect(result.balance.safeToSpendCents).toBe(312000);
     expect(result.spending.periods.current.from).toBe("2027-02-01T00:00:00.000Z");
   });
 });

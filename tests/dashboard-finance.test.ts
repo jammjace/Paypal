@@ -6,7 +6,7 @@ const fixture = createDemoFixture({ userId: "u", accountId: "a", connectionId: "
 
 describe("dashboard finance regression", () => {
   it("preserves negative Safe to Spend instead of silently clamping", () => {
-    expect(balanceSummary(100, fixture.buckets).safeToSpendCents).toBe(-194300);
+    expect(balanceSummary(100, fixture.buckets).safeToSpendCents).toBe(-187900);
   });
   it("rounds ratios to tenths of one percent using integers and handles no baseline", () => {
     expect(percentageTenths(-14900, 89100)).toBe(-167);

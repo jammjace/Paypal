@@ -1,3 +1,7 @@
+> Cost constraint: no paid API calls or payment requirement. Local SQLite and optional local Qwen3 4B/Ollama inference; no hosted AI service.
+
+> Milestone 3 clarification: buckets have two purposes. Spending budgets track category spending against a weekly/monthly limit; savings goals hold accumulated money with a separate monthly contribution plan. Only saved money is earmarked. See [docs/BUCKETS.md](docs/BUCKETS.md) for current semantics, migration and revised sample totals. Original proposal follows for reference.
+
 Pal — Product Specification
 PayPal AI Hackathon 2026
 1. Product Summary

@@ -1,6 +1,14 @@
 import { expect, test } from "@playwright/test";
 
-test("read-only dashboard renders reconciled totals without browser errors or horizontal overflow", async ({ page }, testInfo) => {
+test.beforeEach(async ({ page }) => {
+  await page.goto("/pal");
+  const start = page.getByRole("button", { name: "Start my demo", exact: true });
+  await expect(start).toBeVisible();
+  await start.click();
+  await expect(page.getByRole("heading", { name: "Your buckets", exact: true })).toBeVisible();
+});
+
+test("dashboard renders reconciled totals without browser errors or horizontal overflow", async ({ page }, testInfo) => {
   const errors: string[] = [];
   page.on("pageerror", error => errors.push(error.message));
   await page.goto("/");
@@ -8,12 +16,12 @@ test("read-only dashboard renders reconciled totals without browser errors or ho
   await expect(page.getByRole("heading", { level: 1, name: /pal/ })).toBeVisible();
   const overview = page.getByRole("region", { name: "Your money overview" });
   await expect(overview.getByText("$2,430.00", { exact: true })).toBeVisible();
-  await expect(overview.getByText("$486.00", { exact: true })).toBeVisible();
-  await expect(overview.getByText("$1,944.00", { exact: true })).toBeVisible();
+  await expect(overview.getByText("$550.00", { exact: true })).toBeVisible();
+  await expect(overview.getByText("$1,880.00", { exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "You’re spending 16.7% less than last month." })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Reimbursement", exact: true })).toBeDisabled();
-  await expect(page.getByRole("button", { name: "Create bucket" })).toBeDisabled();
-  await expect(page.getByRole("textbox", { name: "Ask Pal about your money" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Reimbursement", exact: true })).toBeEnabled();
+  await expect(page.getByRole("link", { name: "Create bucket" })).toBeVisible();
+  await expect(page.getByRole("textbox", { name: "Ask Pal about your money" })).toBeEnabled();
   await expect(page.getByRole("region", { name: "Spending Pulse" }).getByText("$742.00", { exact: true })).toBeVisible();
   await expect(page.getByRole("region", { name: "Spending Pulse" }).getByText("$891.00", { exact: true })).toBeVisible();
   await page.getByRole("link", { name: "Across 4 buckets" }).click();

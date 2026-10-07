@@ -1,3 +1,5 @@
+import { classifyTransaction, configuredInterpreter } from "./ai/pal";
+import type { Workspace } from "@/domain/workspace";
 import "server-only";
 import { accountSchema, transactionSchema, timestampSchema } from "@/domain/models";
 import type { FinancialProvider } from "@/providers/financial/FinancialProvider";
@@ -33,5 +35,11 @@ export async function syncFinancialData(provider: FinancialProvider, repository:
       cursors.add(cursor);
     }
   } while (cursor !== undefined);
-  await repository.replaceFinancialSnapshot(userId, { account, transactions, asOf });
+  const prior = await repository.read(userId);
+  const rules = "merchantRules" in prior ? (prior as Workspace).merchantRules : [];
+  const existing = new Set(prior.transactions.map(tx => tx.providerTransactionId));
+  const interpreter = configuredInterpreter();
+  const classified = [];
+  for (const tx of transactions) classified.push(existing.has(tx.providerTransactionId) ? tx : await classifyTransaction(tx, rules, interpreter));
+  await repository.replaceFinancialSnapshot(userId, { account, transactions: classified, asOf });
 }
