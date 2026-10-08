@@ -27,7 +27,7 @@ export function FutureForm({ buckets, events, initial, replaceId }: { buckets: B
     });
   }}>
     <fieldset disabled={pending}>
-      <label>Change type<select value={kind} onChange={e => setKind(e.target.value as ScenarioRequest["kind"])}><option value="CONTRIBUTION">Monthly savings plan</option><option value="BUDGET">This period's spending allowance</option><option value="EVENT">Planned income or expense</option><option value="REMOVE_EVENT">Remove a planned event</option></select></label>
+      <label>Change type<select value={kind} onChange={e => setKind(e.target.value as ScenarioRequest["kind"])}><option value="CONTRIBUTION">Monthly savings plan</option><option value="BUDGET">Spending allowance for this period</option><option value="EVENT">Planned income or expense</option><option value="REMOVE_EVENT">Remove a planned event</option></select></label>
       {(kind === "BUDGET" || kind === "CONTRIBUTION") && <label>Bucket<select name="bucket" key={kind} defaultValue={initial && "bucketId" in initial ? initial.bucketId : undefined} required>{(kind === "BUDGET" ? budgets : goals).map(b => <option key={b.id} value={b.id}>{b.name}</option>)}</select></label>}
       {kind !== "REMOVE_EVENT" && <label>{kind === "BUDGET" ? "Increase allowance by (USD)" : kind === "CONTRIBUTION" ? "New monthly contribution (USD)" : "Event amount (USD)"}<input name="amount" required inputMode="decimal" defaultValue={moneyInput(initialAmount)} /></label>}
       {kind === "BUDGET" && <label>Savings withdrawal<select name="source" defaultValue={initial?.kind === "BUDGET" ? initial.sourceGoalId ?? "" : ""}><option value="">None — increase limit only</option>{goals.map(g => <option value={g.id} key={g.id}>Also withdraw from {g.name}</option>)}</select></label>}

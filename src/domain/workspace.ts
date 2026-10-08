@@ -1,4 +1,5 @@
 import { reallocationDetailsSchema } from "./proposals";
+import { analysisThreadSchema } from "./analysis";
 import { recurringEventSchema, scenarioSchema, clarificationSchema } from "./future";
 import { z } from "zod";
 import { accountSchema, categorySchema, centsSchema, timestampSchema, transactionSchema, type PalSnapshot } from "./models";
@@ -27,6 +28,7 @@ export const palEventSchema = z.object({
 export type PalEvent = z.infer<typeof palEventSchema>;
 export const workspaceSchema = z.object({
   schemaVersion: z.literal(2), revision: z.number().int().nonnegative(),
+  analysisThreads: z.array(analysisThreadSchema).default([]),
   recurringEvents: z.array(recurringEventSchema).default([]),
   futureScenarios: z.array(scenarioSchema).default([]),
   clarifications: z.array(clarificationSchema).default([]),

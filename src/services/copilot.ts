@@ -11,6 +11,7 @@ import { PROPOSAL_TTL_MS } from "./proposals";
 export type CopilotReply = {
   answer: string; mode: string; notice: string; asOf: string; proposalId: string | null;
   scenarioId?: string | null; clarificationId?: string | null; choices?: { value: string; label: string }[];
+  analysisId?: string | null;
   status?: "ANSWER" | "CLARIFICATION" | "UNSUPPORTED" | "AI_FAILURE" | "PREVIEW";
 };
 export type EnhancedRequest = { kind: "PASS" | "BUDGET"; amountCents: number; bucketId: string | null; sourceGoalId: string | null };

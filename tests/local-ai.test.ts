@@ -4,11 +4,34 @@ import { workspaceFromSnapshot } from "@/domain/workspace";
 import { askPal, classifyTransaction } from "@/server/ai/pal";
 import { OllamaInterpreter } from "@/server/ai/structured";
 import { interpretAction } from "@/server/ai/actions";
+import { interpretCopilot } from "@/server/ai/copilot";
+import { planAnalysis } from "@/server/ai/analysis";
 
 // Explicit opt-in only. Ordinary tests never require a downloaded model.
 describe.skipIf(process.env.PAL_RUN_LOCAL_AI_TESTS !== "1")("live local Qwen3 4B", () => {
   const state = workspaceFromSnapshot(createDemoFixture({ userId: "local-eval", accountId: "sample", connectionId: "sample" }, "2026-10-15T18:00:00.000Z"));
   const interpreter = new OllamaInterpreter();
+  it.each([
+    ["at the rate i have been buying coffee from luckin, should i get a monthly $50 subscription instead", "ALTERNATIVE"],
+    ["Why has my Dining spending changed compared with last month?", "COMPARE"],
+    ["What if I cut Shopping by 20%?", "REDUCE"],
+    ["Could I afford another $75 monthly expense?", "AFFORDABILITY"],
+    ["Where could I save money in my spending habits?", "SPENDING"],
+  ])("plans general analysis: %s", async (question, operation) => {
+    const r = await planAnalysis(state, question, [], null, new OllamaInterpreter(fetch, 1536));
+    expect(r.mode, r.notice).toBe("Local AI (Qwen3 4B)");
+    expect(r.plan.steps.some(s => s.operation === operation), JSON.stringify(r.plan)).toBe(true);
+    if (operation === "ALTERNATIVE") expect(r.plan.steps.find(s => s.operation === operation)).toMatchObject({ amount: "50", coverage: "UNKNOWN", merchants: ["Luckin Coffee"] });
+  }, 60000);
+  it.each([
+    ["at the rate i am spending money on public transportation, is it better for me to get a monthly concession pass of 90 dollars instead?", "PASS", 9000],
+    ["i will put more money into coffee than christmas gifts. help me add $60 to coffee", "BUDGET", 6000],
+  ])("interprets MS6 request: %s", async (question, kind, amountCents) => {
+    const result = await interpretCopilot(state, question, interpreter);
+    expect(result.mode, result.notice).toBe("Local AI (Qwen3 4B)");
+    expect(result.request).toMatchObject({ kind, amountCents });
+    if (kind === "BUDGET") expect(result.request).toMatchObject({ bucketId: "coffee", sourceGoalId: "christmas" });
+  }, 60000);
   it("extracts a savings preview from natural phrasing without moving money", async () => {
     const before = structuredClone(state);
     let observed: unknown;

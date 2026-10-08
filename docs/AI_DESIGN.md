@@ -10,7 +10,11 @@ The model receives the question and bucket/merchant/category names, not financia
 
 Queries cover Safe to Spend, equivalent calendar-day comparisons, merchant total/count/average, category totals, top merchant, income partitions, current spending-budget allowance and current savings progress/contribution plan. Previous-month spending queries use that full calendar month. Current results use the normalized snapshot clock, not the host clock. Historical balances and historical bucket snapshots are unsupported. Data is limited to stored provider coverage; provisional categories participate and unclassified purchases may change category totals after review. Gross spend excludes transfers/refunds, following existing analytics policy.
 
-ACTION extracts a normalized one-time savings request, using a strict local grammar or a second structured local-model call. Explicit amounts and bucket names must be grounded in the question. The server persists deterministic funding options for review; AI cannot approve them. The user separately selects and approves an option on `/pal/actions`. See [CONFIRMED_ACTIONS.md](CONFIRMED_ACTIONS.md) for expiry, revalidation and atomic audit behavior. Ask Pal does not move money or persist chat transcripts. Each question is standalone; follow-up pronouns/context are not supported. `askPalAction` accepts a validated question and UUID request ID to deduplicate preview creation.
+ACTION extracts a normalized one-time savings request, using a strict local grammar or a second structured local-model call. Explicit amounts and bucket names must be grounded in the question. The server persists deterministic funding options for review; AI cannot approve them. The user separately selects and approves an option on `/pal/actions`. See [CONFIRMED_ACTIONS.md](CONFIRMED_ACTIONS.md) for expiry, revalidation and atomic audit behavior. `askPalAction` accepts a validated question and UUID request ID to deduplicate preview creation.
+
+MS6 adds a specialized structured interpreter for MONTHLY_PASS and BUDGET_INCREASE requests before the existing query path. It validates copied amounts and bucket names, then creates a persistent, owner-scoped clarification. A follow-up ID resolves replies such as **both**, merchant selections and coverage confirmation; there is no unrestricted conversational memory. Clarifications survive refreshes and expire after 15 minutes or a relevant state change. Confirming clarification creates a calculation or preview, never an allocation. The user approves budget/combined changes separately in `/pal/future`. Temporary budget limits are reflected by ordinary bucket answers.
+
+Unsupported intent, clarification needed, and model failure have distinct response states. A 45-second timeout is identified separately from unsupported input. Deterministic rules can handle the original MS6 prompts when the model is unavailable and are labeled honestly; no hosted fallback is invoked. See [FUTURE_YOU.md](FUTURE_YOU.md) for merchant coverage, projection assumptions and supported replies.
 
 ## Free local-only inference and fallback
 
@@ -63,3 +67,8 @@ Run `npm run test:ai:browser` after building to verify a real question through t
 A production-build desktop browser check also passed with real model inference: the dashboard displayed **Local AI (Qwen3 4B)** and **$15.40 left to spend** for the Coffee budget. No fallback response was accepted by the test.
 
 Milestone 5 verification (2026-10-07) adds a grounded action-extraction test and extends the real-model browser check: “Could you set aside $200 for Travel?” creates deterministic funding options with a separate approval button. The prompt explicitly distinguishes the funding source from the savings destination; omitted sources use AUTO. The model still cannot apply the preview.
+
+## General analysis update
+
+The current dashboard routes advisory questions through a composable read-only planner before the legacy query/action path. The specialized monthly-pass path described above is retained for existing clarification records; new analysis uses the general operations and persistent follow-up threads documented in [COPILOT_ANALYSIS.md](COPILOT_ANALYSIS.md). Explicit change requests still require a separate preview and approval.
+

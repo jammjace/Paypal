@@ -1,0 +1,84 @@
+import { expect, test } from "@playwright/test";
+
+test.beforeEach(async ({ page }) => {
+  await page.goto("/pal");
+  await page.getByRole("button", { name: "Start my demo", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Your buckets" })).toBeVisible();
+});
+test("Coffee clarification survives reload, previews both changes and applies once", async ({ page }, info) => {
+  await page.getByRole("textbox", { name: "Ask Pal about your money" }).fill("i will put more money into coffee than christmas gifts. help me add $60 to coffee");
+  await page.getByRole("button", { name: "Send question" }).click();
+  await expect(page.locator(".ask-result")).toContainText("Clarification needed");
+  await page.reload();
+  await expect(page.getByRole("button", { name: "Also withdraw from Christmas savings" })).toBeVisible();
+  await page.getByRole("textbox", { name: "Ask Pal about your money" }).fill("both");
+  await page.getByRole("button", { name: "Send question" }).click();
+  await page.getByRole("link", { name: "Review proposed change" }).click();
+  const scenario = page.getByRole("region", { name: /^What-if scenario/ });
+  await expect(scenario).toContainText("$100.00 → $160.00");
+  await expect(scenario).toContainText("$260.00 → $200.00");
+  await expect(scenario).toContainText("$550.00 → $610.00");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
+  await page.screenshot({ path: info.outputPath("budget-preview.png"), fullPage: true });
+  await scenario.getByRole("button", { name: "Approve and apply" }).click();
+  await expect(scenario).toContainText("APPLIED");
+  await page.reload();
+  await expect(scenario.getByRole("button", { name: "Approve and apply" })).toHaveCount(0);
+  await page.getByRole("link", { name: "Pal dashboard", exact: true }).click();
+  await expect(page.getByRole("region", { name: "Your money overview" })).toContainText("$610.00");
+  const coffee = page.getByRole("article").filter({ has: page.getByRole("heading", { name: "Coffee", exact: true }) });
+  await expect(coffee).toContainText("$75.40");
+  await expect(coffee).toContainText("This period only");
+});
+test("transport analysis asks about journeys and assumptions before comparing", async ({ page }, info) => {
+  await page.getByRole("textbox", { name: "Ask Pal about your money" }).fill("at the rate i am spending money on public transportation, is it better for me to get a monthly concession pass of 90 dollars instead?");
+  await page.getByRole("button", { name: "Send question" }).click();
+  await expect(page.locator(".ask-result")).toContainText("Transport can include taxis");
+  // Deliberately confirm this hypothetical scope. The seed's Uber is never silently assumed to be public transit.
+  await expect(page.locator(".ask-result")).toContainText("Uber");
+  await page.getByRole("button", { name: "Assume all selected purchases are covered, with no extra charges" }).click();
+  await expect(page.locator(".ask-result")).toContainText("$177.14");
+  await expect(page.locator(".ask-result")).toContainText("$87.14");
+  await expect(page.locator(".ask-result")).toContainText("assumes similar usage");
+  await expect(page.getByRole("region", { name: "Your money overview" })).toContainText("$550.00");
+  await page.screenshot({ path: info.outputPath("pass-analysis.png"), fullPage: true });
+});
+test("a monthly contribution what-if can be modified then discarded without saving a plan", async ({ page }, info) => {
+  await page.getByRole("link", { name: "Future You", exact: true }).click();
+  const form = page.locator("form").filter({ has: page.getByRole("button", { name: "Preview scenario", exact: true }) });
+  await form.getByRole("combobox", { name: "Bucket", exact: true }).selectOption("travel");
+  await form.getByLabel("New monthly contribution (USD)").fill("300");
+  await form.getByRole("button", { name: "Preview scenario", exact: true }).click();
+  const old = page.getByRole("region", { name: /^What-if scenario/ }).filter({ hasText: "$200.00 → $300.00" });
+  await expect(old).toContainText("PENDING");
+  await old.getByText("Modify scenario", { exact: true }).click();
+  await old.getByLabel("New monthly contribution (USD)").fill("250");
+  await old.getByRole("button", { name: "Preview modified scenario" }).click();
+  await expect(old).toContainText("DISCARDED");
+  const revised = page.getByRole("region", { name: /^What-if scenario/ }).filter({ hasText: "$200.00 → $250.00" });
+  await expect(revised).toContainText("PENDING");
+  await revised.getByRole("button", { name: "Discard scenario" }).click();
+  await expect(revised).toContainText("DISCARDED");
+  await page.screenshot({ path: info.outputPath("future-you.png"), fullPage: true });
+  await page.getByRole("link", { name: "Pal dashboard", exact: true }).click();
+  await page.getByRole("link", { name: "Travel", exact: true }).click();
+  await expect(page.getByText("$200.00 planned per month", { exact: true })).toBeVisible();
+});
+test("applying a recurring event saves its projection without changing today's balance", async ({ page }) => {
+  await page.getByRole("link", { name: "Future You", exact: true }).click();
+  const form = page.locator("form").filter({ has: page.getByRole("button", { name: "Preview scenario", exact: true }) });
+  await form.getByRole("combobox", { name: "Change type" }).selectOption("EVENT");
+  await form.getByLabel("Event name").fill("Planned salary");
+  await form.getByRole("combobox", { name: "Direction" }).selectOption("IN");
+  await form.getByLabel("Event amount (USD)").fill("1000");
+  await form.getByLabel("First date (UTC)").fill("2026-11-01");
+  await form.getByRole("button", { name: "Preview scenario", exact: true }).click();
+  const scenario = page.getByRole("region", { name: /^What-if scenario/ });
+  await expect(scenario).toContainText("no payment is scheduled");
+  await scenario.getByRole("button", { name: "Approve and apply" }).click();
+  await expect(scenario).toContainText("APPLIED");
+  await page.reload();
+  await expect(scenario).toContainText("APPLIED");
+  await page.getByRole("link", { name: "Pal dashboard", exact: true }).click();
+  await expect(page.getByRole("region", { name: "Your money overview" })).toContainText("$2,430.00");
+});

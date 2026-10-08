@@ -13,6 +13,9 @@ import { createScenario, decideScenario, readFuture } from "@/services/future";
 import { detectEnhancedRequest, enhancedCopilot, pendingClarification } from "@/services/copilot";
 import { askPal } from "@/server/ai/pal";
 import type { MutablePalRepository } from "@/repositories/MutablePalRepository";
+import { interpretCopilot } from "@/server/ai/copilot";
+import { z } from "zod";
+import type { StructuredInterpreter } from "@/server/ai/structured";
 
 const owner = "future-owner", now = new Date("2026-10-07T12:00:00.000Z");
 const budget: ScenarioRequest = { kind: "BUDGET", bucketId: "coffee", increaseCents: 6000, sourceGoalId: "christmas" };
@@ -85,6 +88,11 @@ describe("calendar projections and isolated simulation", () => {
 });
 
 describe("scenario persistence and approval", () => {
+  it("rejects recurring plans whose cumulative money exceeds safe integer bounds", async () => {
+    const repo = await setup(), before = await repo.read(owner);
+    await expect(preview(repo, { kind: "EVENT", event: { id: "huge", name: "Huge", direction: "IN", amountCents: Number.MAX_SAFE_INTEGER, recurrence: "MONTHLY", startDate: "2026-11-01T12:00:00.000Z" } })).rejects.toThrow("supported range");
+    expect(await repo.read(owner)).toEqual(before);
+  });
   it("applies a combined change once with allocations and audit in the same commit", async () => {
     const repo = await setup(), before = await repo.read(owner), scenario = await preview(repo);
     expect((await repo.read(owner)).buckets).toEqual(before.buckets);
@@ -138,6 +146,19 @@ describe("scenario persistence and approval", () => {
 });
 
 describe("clarification and pass analysis", () => {
+  it("accepts grounded model intents and falls back safely on invented amounts", async () => {
+    const fake = (value: unknown): StructuredInterpreter => ({ generate: async <T>(schema: z.ZodType<T>) => schema.parse(value) });
+    const intent = { intent: "BUDGET_INCREASE", amount: "60", budget: "Coffee", sourceGoal: "Christmas" };
+    const valid = await interpretCopilot(fixture(), budgetQuestion, fake(intent));
+    expect(valid.mode).toBe("Local AI (Qwen3 4B)");
+    expect(valid.request).toMatchObject({ amountCents: 6000, sourceGoalId: "christmas" });
+    const invalid = await interpretCopilot(fixture(), budgetQuestion, fake({ ...intent, amount: "600" }));
+    expect(invalid.mode).toBe("Local fallback");
+    expect(invalid.request?.amountCents).toBe(6000);
+  });
+  it.each(["Do not add $60 to Coffee", "Set Coffee to $60 total", "Add $60 and $20 to Coffee", "Add $1,000 to Coffee", "Add $-60 to Coffee"])("does not reinterpret an ambiguous or negated delta: %s", question => {
+    expect(detectEnhancedRequest(fixture(), question)).toBeNull();
+  });
   it("recognizes both original prompts as distinct supported intents", () => {
     expect(detectEnhancedRequest(fixture(), budgetQuestion)).toMatchObject({ kind: "BUDGET", amountCents: 6000, bucketId: "coffee", sourceGoalId: "christmas" });
     expect(detectEnhancedRequest(fixture(), passQuestion)).toMatchObject({ kind: "PASS", amountCents: 9000 });

@@ -14,6 +14,9 @@ import { reallocationRequestSchema } from "@/domain/proposals";
 import { enhancedCopilot, type CopilotReply } from "@/services/copilot";
 import { createScenario, decideScenario } from "@/services/future";
 import { interpretCopilot } from "./ai/copilot";
+import { explicitChangeRequest } from "./ai/analysis";
+import { answerAnalysis } from "@/services/analysis";
+import { OllamaInterpreter } from "./ai/structured";
 
 export type ActionResult = { ok: boolean; message: string };
 export async function startDemoAction() {
@@ -53,9 +56,14 @@ export async function resetDemoAction() {
 }
 
 export async function askPalAction(input: unknown): Promise<CopilotReply> {
-  const { question, requestId, clarificationId } = z.object({ question: z.string().trim().min(1).max(500), requestId: z.string().uuid(), clarificationId: z.string().nullable().optional() }).strict().parse(input);
+  const { question, requestId, clarificationId, analysisId } = z.object({ question: z.string().trim().min(1).max(500), requestId: z.string().uuid(), clarificationId: z.string().nullable().optional(), analysisId: z.string().nullable().optional() }).strict().parse(input);
   const context = await currentContext();
   if (!context) throw new Error("Session expired. Refresh Pal.");
+  // A new explicit instruction may leave an analysis, but still only creates a reviewable proposal.
+  if (!explicitChangeRequest(question) && (analysisId || !clarificationId)) {
+    return answerAnalysis(context.repository, context.userId, question, requestId, analysisId ?? null,
+      readConfig().PAL_AI_MODE === "ollama" ? new OllamaInterpreter(fetch, 1536) : null);
+  }
   try {
     const interpreted = clarificationId ? null : await interpretCopilot(await context.repository.read(context.userId), question, configuredInterpreter());
     const enhanced = await enhancedCopilot(context.repository, context.userId, question, requestId, clarificationId, new Date(), interpreted?.request);

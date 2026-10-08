@@ -4,7 +4,7 @@ import { z } from "zod";
 import type { Workspace } from "@/domain/workspace";
 import { scenarioRequestSchema, type ScenarioRequest, type FutureScenario } from "@/domain/future";
 import type { MutablePalRepository } from "@/repositories/MutablePalRepository";
-import { simulateChange } from "@/finance/future";
+import { simulateChange, projectFuture } from "@/finance/future";
 import { applyAllocation, recordEvent } from "./mutations";
 import { moneyFingerprint, PROPOSAL_TTL_MS } from "./proposals";
 
@@ -20,6 +20,8 @@ export function createScenarioInState(state: Workspace, input: ScenarioRequest, 
     return existing;
   }
   const preview = simulateChange(state, request);
+  // Reject plans whose cumulative projection exceeds supported integer money bounds.
+  projectFuture(preview.next);
   const scenario: FutureScenario = { id: randomUUID(), requestId, request, fingerprint: futureFingerprint(state), effects: preview.effects,
     createdAt: now.toISOString(), expiresAt: new Date(now.getTime() + PROPOSAL_TTL_MS).toISOString(), status: "PENDING", message: "Preview only. Nothing has changed." };
   state.futureScenarios.push(scenario);

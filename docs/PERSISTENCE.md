@@ -40,6 +40,8 @@ The latest successfully committed UTC sync window is stored with the snapshot. T
 
 ## Seed, reset and limitations
 
+MS6 adds default-empty `recurringEvents`, `futureScenarios` and `clarifications` arrays to v2 workspaces, plus an optional bounded `limitOverride` on a spending budget. Existing workspaces remain readable without reseeding. Scenarios use request IDs, financial/transaction/plan fingerprints and real-time expiry; approval commits combined withdrawals, temporary allowance changes, status and audit together. Projection balances are never persisted as actual account balances. Clarifications are session-owned and resumable, not global conversation state. See [FUTURE_YOU.md](FUTURE_YOU.md).
+
 Milestone 5 adds typed savings proposal details to existing v2 records without dropping historical placeholders. Preview creation writes an audit event but no allocation. Approval atomically commits the chosen option, savings changes, allocation events and final status. Real-time expiry and a financial-state fingerprint protect against stale previews; repeated approvals are no-ops and sibling options cannot both apply. See [CONFIRMED_ACTIONS.md](CONFIRMED_ACTIONS.md).
 
 `npm run dev` plus Start my demo seeds one workspace using the existing deterministic fixture path. Normal reads never reseed. Demo controls → Confirm reset replaces only the current workspace with the baseline and keeps its revision monotonic. Reset intentionally clears its changes, learned rules, receipts and audit history; other owners and session tokens remain intact. Changing DEMO_AS_OF affects new/reset demos, not existing data.

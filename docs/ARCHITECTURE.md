@@ -27,7 +27,7 @@ Server Actions validate commands, revision and idempotency keys. A repository tr
 
 Money inputs and outputs are safe integer cents. Summation and ratio intermediates use BigInt, with checked conversion to safe numbers. Percentage outputs are integer tenths of one percent. Decimal division is permitted for display/CSS only. Safe to Spend may be negative; it is never silently clamped.
 
-Milestone 2 separates checked money utilities, configurable periods, merchant/category analytics, incoming-money partitions, allocation impact validation and fixed-interval goal funding projections. These functions remain pure; milestone 5 adds a separate transactional approval service. Full Future You timelines remain milestone 6. See [FINANCE_ENGINE.md](FINANCE_ENGINE.md) for formulas, rounding, edge cases and assumptions.
+Milestone 2 separates checked money utilities, configurable periods, merchant/category analytics, incoming-money partitions, allocation impact validation and fixed-interval goal funding projections. These functions remain pure; milestone 5 adds a separate transactional approval service. Milestone 6 adds calendar-month projections, confirmed-scope pass comparisons and pure budget/plan simulation. See [FINANCE_ENGINE.md](FINANCE_ENGINE.md) and [FUTURE_YOU.md](FUTURE_YOU.md) for assumptions.
 
 ## Confirmed action path (milestone 5)
 
@@ -37,6 +37,6 @@ One persisted proposal contains mutually exclusive options. A 15-minute wall-clo
 
 ## Current limitations
 
-Local fictional workspaces have anonymous session access control, not real-user authentication. SQLite requires durable local disk. Ask Pal supports optional server-only local Qwen3 4B interpretation through Ollama with an explicit local fallback. All answers are calculated and formatted deterministically. No PayPal calls, automatic recurring allocations or subscription events are implemented. Future You remains a preview. Failure to load a selected source displays a neutral unavailable state without fake substitute balances.
+Local fictional workspaces have anonymous session access control, not real-user authentication. SQLite requires durable local disk. Ask Pal supports optional server-only local Qwen3 4B interpretation through Ollama with an explicit local fallback. All answers are calculated and formatted deterministically. Future You saves user-defined event/contribution plans and confirmed budget changes, but never executes future transfers or payments. No PayPal calls, automatic recurring allocations or provider subscription events are implemented. Failure to load a selected source displays a neutral unavailable state without fake substitute balances.
 
 See [the implementation plan](IMPLEMENTATION_PLAN.md) and [PayPal integration boundary](PAYPAL_INTEGRATION.md).

@@ -207,6 +207,7 @@ details[open] > summary > svg:last-child { transform: rotate(180deg); }
 
 .ask-result { margin-top: 16px; line-height: 1.6; overflow-wrap: anywhere; }
 .ask-result p { margin: 8px 0; }
+.ask-result > p:first-of-type { white-space: pre-line; }
 .ask-pal .prompt-chips { flex-wrap: wrap; }
 .proposal-form { max-width: 650px; display: grid; gap: 16px; padding: 24px; margin: 24px 0; }
 .proposal-review { padding: 24px; margin: 24px 0; scroll-margin-top: 20px; overflow-wrap: anywhere; }

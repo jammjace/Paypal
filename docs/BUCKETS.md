@@ -2,6 +2,8 @@
 
 This clarification supersedes the original all-buckets-are-earmarks model.
 
+MS6 adds confirmed temporary spending-allowance increases, optionally paired with an explicit savings withdrawal. A limit increase alone does not reserve or create money. The override expires at the current UTC budget-period boundary; the usual limit resumes next period. See [FUTURE_YOU.md](FUTURE_YOU.md).
+
 | | Spending budget | Savings goal |
 |---|---|---|
 | Purpose | Limit category spending within a period | Hold money for a future use |
